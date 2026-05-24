@@ -583,6 +583,15 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>
+    // ── Configuración EmailJS ──────────────────────────────────────────────
+    const EMAILJS_PUBLIC_KEY  = 'TU_PUBLIC_KEY';   // Account → Public Key
+    const EMAILJS_SERVICE_ID  = 'TU_SERVICE_ID';   // Email Services → Service ID
+    const EMAILJS_TEMPLATE_ID = 'TU_TEMPLATE_ID';  // Email Templates → Template ID
+    const CORREO_DESTINO      = 'correo@ejemplo.cl'; // A quién llega la alerta
+    // ──────────────────────────────────────────────────────────────────────
+  </script>
   <script>
     const STORAGE_KEY = 'ciberseg_excepciones';
     let records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
@@ -800,8 +809,65 @@
       if (e.target === document.getElementById('modalOverlay')) closeModal();
     });
 
+    async function checkAndSendAlerts() {
+      if (EMAILJS_PUBLIC_KEY === 'TU_PUBLIC_KEY') return;
+
+      const hoy = new Date(); hoy.setHours(0,0,0,0);
+      const claveHoy = `alerta_${hoy.toISOString().split('T')[0]}`;
+
+      const yaEnviadas = new Set(JSON.parse(localStorage.getItem(claveHoy) || '[]'));
+
+      const porVencer = records.filter(r => {
+        if (r.indefinido === 'SI' || !r.fLimite || r.estado === 'Rechazado' || r.estado === 'Cancelado') return false;
+        const limite = new Date(r.fLimite + 'T00:00:00');
+        const diff = Math.ceil((limite - hoy) / 86400000);
+        return diff >= 0 && diff <= 2 && !yaEnviadas.has(r.id);
+      });
+
+      if (porVencer.length === 0) return;
+
+      const mensaje = porVencer.map(r => {
+        const limite = new Date(r.fLimite + 'T00:00:00');
+        const diff = Math.ceil((limite - hoy) / 86400000);
+        const dias = diff === 0 ? 'VENCE HOY' : diff === 1 ? 'vence mañana' : 'vence en 2 días';
+        return `• [Ticket ${r.ticket}] ${r.tipo} | Solicitante: ${r.solicitante} | Plataforma: ${r.plataforma} | ${dias} (${r.fLimite})`;
+      }).join('\n');
+
+      try {
+        emailjs.init(EMAILJS_PUBLIC_KEY);
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+          mensaje,
+          to_email: CORREO_DESTINO,
+        });
+
+        porVencer.forEach(r => yaEnviadas.add(r.id));
+        localStorage.setItem(claveHoy, JSON.stringify([...yaEnviadas]));
+
+        mostrarBannerAlerta(porVencer.length);
+      } catch (err) {
+        console.error('Error enviando alerta EmailJS:', err);
+      }
+    }
+
+    function mostrarBannerAlerta(cantidad) {
+      const banner = document.createElement('div');
+      banner.style.cssText = `
+        position:fixed; bottom:24px; right:24px; z-index:999;
+        background:#da3633; color:#fff; padding:14px 20px;
+        border-radius:8px; font-size:13px; font-weight:500;
+        box-shadow:0 4px 20px rgba(0,0,0,0.4); max-width:320px;
+        display:flex; align-items:center; gap:10px;
+      `;
+      banner.innerHTML = `<span style="font-size:18px">⚠️</span>
+        <span>Se envió alerta: <strong>${cantidad} excepción${cantidad > 1 ? 'es' : ''}</strong> vence${cantidad > 1 ? 'n' : ''} en 2 días o menos.</span>
+        <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:16px;margin-left:auto;">×</button>`;
+      document.body.appendChild(banner);
+      setTimeout(() => banner.remove(), 8000);
+    }
+
     setHeaderDate();
     renderTable();
+    checkAndSendAlerts();
   </script>
 </body>
 </html>
