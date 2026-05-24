@@ -249,6 +249,9 @@
     .estado-pendiente { background: rgba(210,153,34,0.15); color: var(--yellow); border: 1px solid rgba(210,153,34,0.3); }
     .estado-rechazado { background: rgba(248,81,73,0.15); color: var(--red); border: 1px solid rgba(248,81,73,0.3); }
     .estado-vencido { background: rgba(248,81,73,0.2); color: var(--red); border: 1px solid rgba(248,81,73,0.5); }
+    .estado-ejecucion { background: rgba(31,111,235,0.15); color: var(--accent-hover); border: 1px solid rgba(31,111,235,0.3); }
+    .estado-ejecutado { background: rgba(63,185,80,0.1); color: var(--green); border: 1px solid rgba(63,185,80,0.2); }
+    .estado-cancelado { background: rgba(139,148,158,0.15); color: var(--text-muted); border: 1px solid rgba(139,148,158,0.3); }
 
     .actions { display: flex; gap: 6px; }
 
@@ -460,12 +463,10 @@
             <select id="f_tipo">
               <option value="">Seleccionar...</option>
               <option>Acceso Temporal</option>
-              <option>Acceso Permanente</option>
-              <option>Regla de Firewall</option>
-              <option>Excepción de Política</option>
-              <option>Excepción de Antivirus</option>
-              <option>Excepción de Proxy</option>
-              <option>Otro</option>
+              <option>Configuración Especial</option>
+              <option>Excepción de Seguridad</option>
+              <option>Excepción de Compliance</option>
+              <option>Otra</option>
             </select>
           </div>
           <div class="form-group">
@@ -478,19 +479,52 @@
           </div>
           <div class="form-group">
             <label>Gerencia</label>
-            <input type="text" id="f_gerencia" placeholder="Área o gerencia" />
+            <select id="f_gerencia">
+              <option value="">Seleccionar...</option>
+              <option>Técnica</option>
+              <option>General</option>
+              <option>Procesos de Inversiones</option>
+              <option>Inversiones Inmobiliaria</option>
+              <option>Operaciones</option>
+              <option>Plataforma y Control</option>
+              <option>Inversiones</option>
+              <option>Planificación y Gestión Financiera</option>
+              <option>Estudios y Riesgo Financiero</option>
+              <option>Comercial</option>
+              <option>Gobierno, Riesgo y Cumplimiento</option>
+              <option>Riesgos Corporativos</option>
+            </select>
           </div>
           <div class="form-group">
             <label>Plataforma</label>
-            <input type="text" id="f_plataforma" placeholder="Ej: Fortigate Interno" />
+            <select id="f_plataforma">
+              <option value="">Seleccionar...</option>
+              <option>Cloudflare</option>
+              <option>Kaspersky</option>
+              <option>Sentinel</option>
+              <option>Fortigate Interno</option>
+              <option>Fortigate Borde</option>
+              <option>SMG</option>
+              <option>Deep Security</option>
+            </select>
           </div>
           <div class="form-group">
             <label>Aprobado Por</label>
-            <input type="text" id="f_aprobado" placeholder="Nombre del aprobador" />
+            <input type="text" id="f_aprobado" list="list_aprobado" placeholder="Nombre del aprobador" autocomplete="off" maxlength="100" />
+            <datalist id="list_aprobado">
+              <option>Jose Saavedra</option>
+              <option>Luis Caris</option>
+              <option>Felipe Acosta</option>
+            </datalist>
           </div>
           <div class="form-group">
             <label>Ejecutor</label>
-            <input type="text" id="f_ejecutor" placeholder="Nombre del ejecutor" />
+            <input type="text" id="f_ejecutor" list="list_ejecutor" placeholder="Nombre del ejecutor" autocomplete="off" maxlength="100" />
+            <datalist id="list_ejecutor">
+              <option>Ricardo Gonzalez</option>
+              <option>Yordan Padron</option>
+              <option>Felipe Acosta</option>
+            </datalist>
           </div>
           <div class="form-group">
             <label>Fecha Solicitud</label>
@@ -507,17 +541,20 @@
           <div class="form-group">
             <label>Indefinido</label>
             <select id="f_indefinido">
-              <option value="No">No</option>
-              <option value="Sí">Sí</option>
+              <option value="NO">NO</option>
+              <option value="SI">SI</option>
             </select>
           </div>
           <div class="form-group">
             <label>Estado</label>
             <select id="f_estado">
               <option value="">Seleccionar...</option>
-              <option>Aprobado</option>
               <option>Pendiente</option>
+              <option>Aprobado</option>
+              <option>En Ejecución</option>
+              <option>Ejecutado</option>
               <option>Rechazado</option>
+              <option>Cancelado</option>
             </select>
           </div>
           <div class="form-group full">
@@ -552,6 +589,11 @@
     let editingId = null;
     let deletingId = null;
 
+    function esc(s) {
+      if (!s) return '';
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
     // Seed demo data if empty
     if (records.length === 0) {
       records = [{
@@ -567,7 +609,7 @@
         fSolicitud: '2026-04-17',
         fAprobacion: '2026-04-17',
         fLimite: '2026-05-17',
-        indefinido: 'No',
+        indefinido: 'NO',
         estado: 'Aprobado',
         detalle: 'Acceso temporal a SFTP de Asicom.\nSe recomienda el uso de VPN Site to Site.'
       }];
@@ -583,7 +625,7 @@
     }
 
     function getSemaforo(r) {
-      if (r.indefinido === 'Sí') return { cls: 'verde', label: 'Verde' };
+      if (r.indefinido === 'SI') return { cls: 'verde', label: 'Verde' };
       if (r.estado === 'Rechazado') return { cls: 'rojo', label: 'Rojo' };
       if (!r.fLimite) return { cls: 'verde', label: 'Verde' };
       const hoy = new Date(); hoy.setHours(0,0,0,0);
@@ -607,8 +649,8 @@
         const limite = new Date(r.fLimite + 'T00:00:00');
         if (limite < hoy) return '<span class="estado-badge estado-vencido">Vencido</span>';
       }
-      const cls = { Aprobado: 'aprobado', Pendiente: 'pendiente', Rechazado: 'rechazado' }[estado] || 'pendiente';
-      return `<span class="estado-badge estado-${cls}">${estado || '—'}</span>`;
+      const cls = { Aprobado: 'aprobado', Pendiente: 'pendiente', Rechazado: 'rechazado', 'En Ejecución': 'ejecucion', Ejecutado: 'ejecutado', Cancelado: 'cancelado' }[estado] || 'pendiente';
+      return `<span class="estado-badge estado-${cls}">${esc(estado) || '—'}</span>`;
     }
 
     function renderTable() {
@@ -635,21 +677,21 @@
         const sem = getSemaforo(r);
         return `<tr>
           <td><strong>${r.id}</strong></td>
-          <td>${r.ticket || '—'}</td>
-          <td>${r.tipo || '—'}</td>
-          <td>${r.solicitante || '—'}</td>
-          <td>${r.jefatura || '—'}</td>
-          <td>${r.gerencia || '—'}</td>
-          <td>${r.plataforma || '—'}</td>
-          <td>${r.aprobado || '—'}</td>
-          <td>${r.ejecutor || '—'}</td>
+          <td>${esc(r.ticket) || '—'}</td>
+          <td>${esc(r.tipo) || '—'}</td>
+          <td>${esc(r.solicitante) || '—'}</td>
+          <td>${esc(r.jefatura) || '—'}</td>
+          <td>${esc(r.gerencia) || '—'}</td>
+          <td>${esc(r.plataforma) || '—'}</td>
+          <td>${esc(r.aprobado) || '—'}</td>
+          <td>${esc(r.ejecutor) || '—'}</td>
           <td>${formatDate(r.fSolicitud)}</td>
           <td>${formatDate(r.fAprobacion)}</td>
-          <td>${r.indefinido === 'Sí' ? '<span style="color:var(--text-muted)">Indefinido</span>' : formatDate(r.fLimite)}</td>
-          <td>${r.indefinido || 'No'}</td>
+          <td>${r.indefinido === 'SI' ? '<span style="color:var(--text-muted)">Indefinido</span>' : formatDate(r.fLimite)}</td>
+          <td>${esc(r.indefinido) || 'NO'}</td>
           <td>${estadoBadge(r.estado, r)}</td>
           <td><span class="semaforo ${sem.cls}"><span class="semaforo-dot"></span>${sem.label}</span></td>
-          <td class="detalle">${(r.detalle || '—').replace(/\n/g, '<br>')}</td>
+          <td class="detalle">${esc(r.detalle || '—').replace(/\n/g, '<br>')}</td>
           <td><div class="actions">
             <button class="btn btn-edit" onclick="openModal(${r.id})">✏ Editar</button>
             <button class="btn btn-danger" onclick="askDelete(${r.id})">✕ Eliminar</button>
@@ -681,7 +723,7 @@
       } else {
         document.getElementById('modalTitle').textContent = 'Nueva Excepción';
         fields.forEach(f => document.getElementById('f_' + f).value = '');
-        document.getElementById('f_indefinido').value = 'No';
+        document.getElementById('f_indefinido').value = 'NO';
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('f_fSolicitud').value = today;
       }
