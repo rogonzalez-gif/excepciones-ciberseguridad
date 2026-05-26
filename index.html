@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Registro de Excepciones - Ciberseguridad</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     :root {
       --bg: #0d1117;
@@ -18,233 +19,104 @@
       --yellow: #d29922;
       --red: #f85149;
       --danger: #da3633;
+      --purple: #bc8cff;
+      --orange: #f0883e;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; min-height: 100vh; }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 14px;
-      min-height: 100vh;
-    }
+    /* HEADER */
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 32px; display: flex; align-items: center; gap: 16px; }
+    header .logo { width: 36px; height: 36px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    header h1 { font-size: 18px; font-weight: 600; color: #f0f6fc; }
+    header .subtitle { font-size: 13px; color: var(--text-muted); }
+    header .date { margin-left: auto; font-size: 13px; color: var(--text-muted); }
 
-    header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 16px 32px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
+    /* TABS */
+    .tabs { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 32px; display: flex; gap: 4px; }
+    .tab { padding: 12px 20px; font-size: 13px; font-weight: 500; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; background: none; border-top: none; border-left: none; border-right: none; }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--accent-hover); border-bottom-color: var(--accent); }
 
-    header .logo {
-      width: 36px;
-      height: 36px;
-      background: var(--accent);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-    }
+    /* VIEWS */
+    .view { display: none; }
+    .view.active { display: block; }
+    .container { padding: 24px 32px; }
 
-    header h1 {
-      font-size: 18px;
-      font-weight: 600;
-      color: #f0f6fc;
-    }
+    /* DASHBOARD GRID */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; position: relative; overflow: hidden; }
+    .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+    .kpi-card.blue::before { background: var(--accent); }
+    .kpi-card.green::before { background: var(--green); }
+    .kpi-card.yellow::before { background: var(--yellow); }
+    .kpi-card.red::before { background: var(--red); }
+    .kpi-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+    .kpi-value { font-size: 36px; font-weight: 700; color: #f0f6fc; line-height: 1; }
+    .kpi-sub { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+    .kpi-icon { position: absolute; right: 16px; top: 16px; font-size: 28px; opacity: 0.2; }
 
-    header .subtitle {
-      font-size: 13px;
-      color: var(--text-muted);
-    }
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+    .chart-card.full { grid-column: 1 / -1; }
+    .chart-title { font-size: 13px; font-weight: 600; color: #f0f6fc; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .chart-title span { font-size: 10px; color: var(--text-muted); font-weight: 400; }
+    .chart-wrap { position: relative; height: 220px; }
+    .chart-wrap.tall { height: 280px; }
 
-    header .date {
-      margin-left: auto;
-      font-size: 13px;
-      color: var(--text-muted);
-    }
+    /* UPCOMING TABLE */
+    .upcoming-title { font-size: 13px; font-weight: 600; color: #f0f6fc; margin-bottom: 12px; }
+    .upcoming-table { width: 100%; border-collapse: collapse; }
+    .upcoming-table th { background: var(--surface2); padding: 8px 12px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+    .upcoming-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text); }
+    .upcoming-table tr:last-child td { border-bottom: none; }
+    .upcoming-table tr:hover td { background: var(--surface2); cursor: pointer; }
 
-    .container {
-      padding: 24px 32px;
-      max-width: 100%;
-    }
-
-    .toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .toolbar-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .stats {
-      display: flex;
-      gap: 16px;
-    }
-
-    .stat-badge {
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 500;
-      border: 1px solid var(--border);
-      background: var(--surface2);
-    }
-
+    /* REGISTRO VIEW */
+    .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .toolbar-left { display: flex; align-items: center; gap: 12px; }
+    .stats { display: flex; gap: 16px; }
+    .stat-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; border: 1px solid var(--border); background: var(--surface2); }
     .stat-badge.green { border-color: var(--green); color: var(--green); }
     .stat-badge.yellow { border-color: var(--yellow); color: var(--yellow); }
     .stat-badge.red { border-color: var(--red); color: var(--red); }
 
-    .btn {
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: all 0.15s;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
-    }
-
+    /* BUTTONS */
+    .btn { padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
     .btn-primary:hover { background: var(--accent-hover); }
-
-    .btn-secondary {
-      background: var(--surface2);
-      color: var(--text);
-      border-color: var(--border);
-    }
-
+    .btn-secondary { background: var(--surface2); color: var(--text); border-color: var(--border); }
     .btn-secondary:hover { background: var(--border); }
-
-    .btn-danger {
-      background: transparent;
-      color: var(--red);
-      border-color: var(--red);
-      padding: 4px 10px;
-      font-size: 12px;
-    }
-
+    .btn-danger { background: transparent; color: var(--red); border-color: var(--red); padding: 4px 10px; font-size: 12px; }
     .btn-danger:hover { background: rgba(248,81,73,0.12); }
-
-    .btn-edit {
-      background: transparent;
-      color: var(--accent-hover);
-      border-color: var(--accent);
-      padding: 4px 10px;
-      font-size: 12px;
-    }
-
+    .btn-edit { background: transparent; color: var(--accent-hover); border-color: var(--accent); padding: 4px 10px; font-size: 12px; }
     .btn-edit:hover { background: rgba(31,111,235,0.12); }
 
-    .search-input {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 7px 12px;
-      color: var(--text);
-      font-size: 13px;
-      width: 260px;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-
+    /* SEARCH */
+    .search-input { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 7px 12px; color: var(--text); font-size: 13px; width: 260px; outline: none; transition: border-color 0.15s; }
     .search-input:focus { border-color: var(--accent); }
     .search-input::placeholder { color: var(--text-muted); }
 
-    .table-wrapper {
-      overflow-x: auto;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: var(--surface);
-    }
-
-    thead th {
-      background: var(--surface2);
-      padding: 10px 14px;
-      text-align: left;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      border-bottom: 1px solid var(--border);
-      white-space: nowrap;
-    }
-
-    tbody tr {
-      border-bottom: 1px solid var(--border);
-      transition: background 0.1s;
-    }
-
+    /* TABLE */
+    .table-wrapper { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; background: var(--surface); }
+    thead th { background: var(--surface2); padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
     tbody tr:last-child { border-bottom: none; }
     tbody tr:hover { background: var(--surface2); }
+    tbody td { padding: 10px 14px; vertical-align: middle; color: var(--text); white-space: nowrap; }
+    tbody td.detalle { white-space: normal; max-width: 220px; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
 
-    tbody td {
-      padding: 10px 14px;
-      vertical-align: middle;
-      color: var(--text);
-      white-space: nowrap;
-    }
-
-    tbody td.detalle {
-      white-space: normal;
-      max-width: 220px;
-      font-size: 12px;
-      color: var(--text-muted);
-      line-height: 1.5;
-    }
-
-    .semaforo {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 500;
-    }
-
-    .semaforo-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-    }
-
+    /* SEMAFORO & BADGES */
+    .semaforo { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; }
+    .semaforo-dot { width: 10px; height: 10px; border-radius: 50%; }
     .semaforo.verde .semaforo-dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
     .semaforo.amarillo .semaforo-dot { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
     .semaforo.rojo .semaforo-dot { background: var(--red); box-shadow: 0 0 6px var(--red); }
     .semaforo.verde { color: var(--green); }
     .semaforo.amarillo { color: var(--yellow); }
     .semaforo.rojo { color: var(--red); }
-
-    .estado-badge {
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 500;
-    }
-
+    .estado-badge { padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
     .estado-aprobado { background: rgba(63,185,80,0.15); color: var(--green); border: 1px solid rgba(63,185,80,0.3); }
     .estado-pendiente { background: rgba(210,153,34,0.15); color: var(--yellow); border: 1px solid rgba(210,153,34,0.3); }
     .estado-rechazado { background: rgba(248,81,73,0.15); color: var(--red); border: 1px solid rgba(248,81,73,0.3); }
@@ -252,148 +124,48 @@
     .estado-ejecucion { background: rgba(31,111,235,0.15); color: var(--accent-hover); border: 1px solid rgba(31,111,235,0.3); }
     .estado-ejecutado { background: rgba(63,185,80,0.1); color: var(--green); border: 1px solid rgba(63,185,80,0.2); }
     .estado-cancelado { background: rgba(139,148,158,0.15); color: var(--text-muted); border: 1px solid rgba(139,148,158,0.3); }
-
     .actions { display: flex; gap: 6px; }
-
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--text-muted);
-    }
-
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
     .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
 
-    /* Modal */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-    }
-
+    /* MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
     .modal-overlay.open { display: flex; }
-
-    .modal {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      width: 720px;
-      max-width: calc(100vw - 32px);
-      max-height: calc(100vh - 64px);
-      overflow-y: auto;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    }
-
-    .modal-header {
-      padding: 20px 24px 16px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 720px; max-width: calc(100vw - 32px); max-height: calc(100vh - 64px); overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
     .modal-header h2 { font-size: 16px; font-weight: 600; color: #f0f6fc; }
-
-    .modal-close {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      font-size: 20px;
-      padding: 4px;
-      line-height: 1;
-    }
-
+    .modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 20px; padding: 4px; line-height: 1; }
     .modal-close:hover { color: var(--text); }
-
     .modal-body { padding: 24px; }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-group.full { grid-column: 1 / -1; }
-
-    .form-group label {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 8px 12px;
-      color: var(--text);
-      font-size: 13px;
-      outline: none;
-      transition: border-color 0.15s;
-      font-family: inherit;
-    }
-
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus { border-color: var(--accent); }
-
+    .form-group label { font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .form-group input, .form-group select, .form-group textarea { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; color: var(--text); font-size: 13px; outline: none; transition: border-color 0.15s; font-family: inherit; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
     .form-group textarea { resize: vertical; min-height: 80px; }
-
     .form-group select option { background: var(--surface2); }
+    .modal-footer { padding: 16px 24px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
 
-    .modal-footer {
-      padding: 16px 24px 20px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-    }
-
-    .confirm-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      z-index: 200;
-      align-items: center;
-      justify-content: center;
-    }
-
+    /* CONFIRM */
+    .confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; }
     .confirm-overlay.open { display: flex; }
-
-    .confirm-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 28px;
-      width: 380px;
-      text-align: center;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    }
-
+    .confirm-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 28px; width: 380px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
     .confirm-box .icon { font-size: 36px; margin-bottom: 12px; }
     .confirm-box h3 { font-size: 16px; margin-bottom: 8px; color: #f0f6fc; }
     .confirm-box p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
     .confirm-btns { display: flex; gap: 10px; justify-content: center; }
 
+    @media (max-width: 900px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .charts-grid { grid-template-columns: 1fr; }
+    }
     @media (max-width: 600px) {
       .form-grid { grid-template-columns: 1fr; }
       .container { padding: 16px; }
       header { padding: 12px 16px; }
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .tabs { padding: 0 16px; }
     }
   </style>
 </head>
@@ -408,40 +180,84 @@
     <div class="date" id="headerDate"></div>
   </header>
 
-  <div class="container">
-    <div class="toolbar">
-      <div class="toolbar-left">
-        <input type="text" class="search-input" id="searchInput" placeholder="Buscar por ticket, solicitante, plataforma..." oninput="renderTable()" />
-        <div class="stats" id="statsBar"></div>
-      </div>
-      <button class="btn btn-primary" onclick="openModal()">+ Nueva Excepción</button>
-    </div>
+  <nav class="tabs">
+    <button class="tab active" onclick="showView('dashboard')">Dashboard</button>
+    <button class="tab" onclick="showView('registro')">Registro de Excepciones</button>
+  </nav>
 
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Ticket N°</th>
-            <th>Tipo Excepción</th>
-            <th>Solicitante</th>
-            <th>Jefatura</th>
-            <th>Gerencia</th>
-            <th>Plataforma</th>
-            <th>Aprobado Por</th>
-            <th>Ejecutor</th>
-            <th>F. Solicitud</th>
-            <th>F. Aprobación</th>
-            <th>F. Límite</th>
-            <th>Indefinido</th>
-            <th>Estado</th>
-            <th>Semáforo</th>
-            <th>Detalle</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
+  <!-- DASHBOARD -->
+  <div id="view-dashboard" class="view active">
+    <div class="container">
+
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title">Distribución por Estado <span>cantidad de excepciones</span></div>
+          <div class="chart-wrap"><canvas id="chartEstado"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Por Plataforma <span>cantidad de excepciones</span></div>
+          <div class="chart-wrap"><canvas id="chartPlataforma"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Por Tipo de Excepción <span>cantidad</span></div>
+          <div class="chart-wrap"><canvas id="chartTipo"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Por Gerencia <span>top gerencias</span></div>
+          <div class="chart-wrap"><canvas id="chartGerencia"></canvas></div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="upcoming-title">⚠️ Excepciones que requieren atención</div>
+        <div class="table-wrapper">
+          <table class="upcoming-table">
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>Tipo</th>
+                <th>Solicitante</th>
+                <th>Plataforma</th>
+                <th>Gerencia</th>
+                <th>Fecha Límite</th>
+                <th>Días restantes</th>
+                <th>Semáforo</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="upcomingBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- REGISTRO -->
+  <div id="view-registro" class="view">
+    <div class="container">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <input type="text" class="search-input" id="searchInput" placeholder="Buscar por ticket, solicitante, plataforma..." oninput="renderTable()" />
+          <div class="stats" id="statsBar"></div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal()">+ Nueva Excepción</button>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Ticket N°</th><th>Tipo Excepción</th><th>Solicitante</th>
+              <th>Jefatura</th><th>Gerencia</th><th>Plataforma</th><th>Aprobado Por</th>
+              <th>Ejecutor</th><th>F. Solicitud</th><th>F. Aprobación</th><th>F. Límite</th>
+              <th>Indefinido</th><th>Estado</th><th>Semáforo</th><th>Detalle</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -456,7 +272,7 @@
         <div class="form-grid">
           <div class="form-group">
             <label>Ticket N°</label>
-            <input type="text" id="f_ticket" placeholder="Ej: 427434" />
+            <input type="text" id="f_ticket" placeholder="Ej: 427434" maxlength="20" />
           </div>
           <div class="form-group">
             <label>Tipo Excepción</label>
@@ -471,11 +287,11 @@
           </div>
           <div class="form-group">
             <label>Solicitante</label>
-            <input type="text" id="f_solicitante" placeholder="Nombre completo" />
+            <input type="text" id="f_solicitante" placeholder="Nombre completo" maxlength="100" />
           </div>
           <div class="form-group">
             <label>Jefatura</label>
-            <input type="text" id="f_jefatura" placeholder="Nombre del jefe" />
+            <input type="text" id="f_jefatura" placeholder="Nombre del jefe" maxlength="100" />
           </div>
           <div class="form-group">
             <label>Gerencia</label>
@@ -559,7 +375,7 @@
           </div>
           <div class="form-group full">
             <label>Detalle</label>
-            <textarea id="f_detalle" placeholder="Descripción de la excepción..."></textarea>
+            <textarea id="f_detalle" placeholder="Descripción de la excepción..." maxlength="1000"></textarea>
           </div>
         </div>
       </div>
@@ -585,57 +401,52 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>
-    // ── Configuración EmailJS ──────────────────────────────────────────────
-    const EMAILJS_PUBLIC_KEY  = 'VMHJ6GV-2O_PNQzXk'; // Account → Public Key
+    const EMAILJS_PUBLIC_KEY  = 'VMHJ6GV-2O_PNQzXk';
     const EMAILJS_SERVICE_ID  = 'service_bl0zvvg';
     const EMAILJS_TEMPLATE_ID = 'template_r631kds';
     const CORREO_DESTINO      = 'rogonzalez@pentavida.cl';
-    // ──────────────────────────────────────────────────────────────────────
   </script>
   <script>
     const STORAGE_KEY = 'ciberseg_excepciones';
     let records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     let editingId = null;
     let deletingId = null;
+    let chartInstances = {};
 
     function esc(s) {
       if (!s) return '';
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
-    // Seed demo data if empty
+    const DUMMY_DATA = [
+      { id:1,  ticket:'427434', tipo:'Acceso Temporal',        solicitante:'Cristian Pino',       jefatura:'Cristian Pino',   gerencia:'Procesos de Inversiones',          plataforma:'Fortigate Interno', aprobado:'Felipe Acosta',  ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-04-17', fAprobacion:'2026-04-17', fLimite:'2026-05-25', indefinido:'NO', estado:'Aprobado',     detalle:'Acceso temporal a SFTP de Asicom. Se recomienda el uso de VPN Site to Site.' },
+      { id:2,  ticket:'431205', tipo:'Configuración Especial',  solicitante:'María González',      jefatura:'José Ramírez',    gerencia:'Técnica',                          plataforma:'Cloudflare',        aprobado:'Luis Caris',     ejecutor:'Yordan Padron',    fSolicitud:'2026-04-20', fAprobacion:'2026-04-21', fLimite:'2026-12-31', indefinido:'NO', estado:'Aprobado',     detalle:'Configuración de reglas WAF para aplicación web interna.' },
+      { id:3,  ticket:'435678', tipo:'Excepción de Seguridad',  solicitante:'Pedro Soto',          jefatura:'Ana Torres',      gerencia:'Comercial',                        plataforma:'Kaspersky',         aprobado:'Jose Saavedra',  ejecutor:'Felipe Acosta',    fSolicitud:'2026-03-10', fAprobacion:'2026-03-12', fLimite:'2026-05-10', indefinido:'NO', estado:'Ejecutado',    detalle:'Exclusión de análisis en tiempo real para proceso batch nocturno.' },
+      { id:4,  ticket:'440123', tipo:'Excepción de Compliance', solicitante:'Laura Vega',          jefatura:'Carlos Muñoz',    gerencia:'Gobierno, Riesgo y Cumplimiento',  plataforma:'Sentinel',          aprobado:'Felipe Acosta',  ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-05-01', fAprobacion:'',           fLimite:'',           indefinido:'NO', estado:'Pendiente',    detalle:'Excepción solicitada para integración con proveedor externo de auditoría.' },
+      { id:5,  ticket:'442890', tipo:'Acceso Temporal',         solicitante:'Roberto Díaz',        jefatura:'Cristian Pino',   gerencia:'Inversiones',                      plataforma:'Fortigate Borde',   aprobado:'Luis Caris',     ejecutor:'Yordan Padron',    fSolicitud:'2026-05-05', fAprobacion:'2026-05-06', fLimite:'2026-05-24', indefinido:'NO', estado:'Aprobado',     detalle:'Acceso temporal para consultor externo durante proyecto de migración.' },
+      { id:6,  ticket:'445001', tipo:'Configuración Especial',  solicitante:'Andrea Morales',      jefatura:'Jorge Fuentes',   gerencia:'Planificación y Gestión Financiera',plataforma:'SMG',               aprobado:'Jose Saavedra',  ejecutor:'Felipe Acosta',    fSolicitud:'2026-04-15', fAprobacion:'2026-04-16', fLimite:'',           indefinido:'SI', estado:'Aprobado',     detalle:'Configuración permanente para integración con sistema de pagos internacionales.' },
+      { id:7,  ticket:'447332', tipo:'Excepción de Seguridad',  solicitante:'Felipe Castro',       jefatura:'Ana Torres',      gerencia:'Operaciones',                      plataforma:'Deep Security',     aprobado:'Felipe Acosta',  ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-05-10', fAprobacion:'2026-05-11', fLimite:'2026-06-10', indefinido:'NO', estado:'En Ejecución', detalle:'Exclusión de módulo IDS para servidor de procesamiento de imágenes.' },
+      { id:8,  ticket:'449678', tipo:'Otra',                    solicitante:'Valentina Rojas',     jefatura:'Carlos Muñoz',    gerencia:'Riesgos Corporativos',              plataforma:'Cloudflare',        aprobado:'Luis Caris',     ejecutor:'Yordan Padron',    fSolicitud:'2026-04-28', fAprobacion:'',           fLimite:'',           indefinido:'NO', estado:'Rechazado',    detalle:'Solicitud de apertura de puerto 8080 para aplicación legacy. Rechazado por política.' },
+      { id:9,  ticket:'452100', tipo:'Acceso Temporal',         solicitante:'Gonzalo Herrera',     jefatura:'José Ramírez',    gerencia:'Estudios y Riesgo Financiero',      plataforma:'Fortigate Interno', aprobado:'Jose Saavedra',  ejecutor:'Felipe Acosta',    fSolicitud:'2026-05-12', fAprobacion:'2026-05-13', fLimite:'2026-07-13', indefinido:'NO', estado:'Aprobado',     detalle:'Acceso temporal para equipo de auditoría interna durante revisión semestral.' },
+      { id:10, ticket:'454500', tipo:'Excepción de Compliance', solicitante:'Camila Fernández',    jefatura:'Jorge Fuentes',   gerencia:'Inversiones Inmobiliaria',          plataforma:'Kaspersky',         aprobado:'Felipe Acosta',  ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-05-15', fAprobacion:'2026-05-15', fLimite:'2026-08-15', indefinido:'NO', estado:'Aprobado',     detalle:'Excepción de política antivirus para software de gestión inmobiliaria certificado.' },
+      { id:11, ticket:'456789', tipo:'Configuración Especial',  solicitante:'Martín Silva',        jefatura:'Ana Torres',      gerencia:'Plataforma y Control',              plataforma:'Sentinel',          aprobado:'Luis Caris',     ejecutor:'Yordan Padron',    fSolicitud:'2026-05-18', fAprobacion:'',           fLimite:'',           indefinido:'NO', estado:'Pendiente',    detalle:'Configuración de alertas personalizadas para detección de anomalías en red OT.' },
+      { id:12, ticket:'459001', tipo:'Excepción de Seguridad',  solicitante:'Daniela Castillo',    jefatura:'Cristian Pino',   gerencia:'General',                          plataforma:'SMG',               aprobado:'Jose Saavedra',  ejecutor:'Felipe Acosta',    fSolicitud:'2026-03-01', fAprobacion:'2026-03-02', fLimite:'2026-04-01', indefinido:'NO', estado:'Ejecutado',    detalle:'Excepción de filtro de correo para dominio de proveedor estratégico.' },
+      { id:13, ticket:'461234', tipo:'Otra',                    solicitante:'Sebastián Ramírez',   jefatura:'Jorge Fuentes',   gerencia:'Comercial',                        plataforma:'Deep Security',     aprobado:'Felipe Acosta',  ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-05-20', fAprobacion:'2026-05-21', fLimite:'2026-11-21', indefinido:'NO', estado:'En Ejecución', detalle:'Excepción para herramienta de monitoreo de rendimiento en servidores de producción.' },
+      { id:14, ticket:'463500', tipo:'Acceso Temporal',         solicitante:'Isabel Muñoz',        jefatura:'José Ramírez',    gerencia:'Técnica',                          plataforma:'Fortigate Borde',   aprobado:'Luis Caris',     ejecutor:'Yordan Padron',    fSolicitud:'2026-05-22', fAprobacion:'2026-05-22', fLimite:'2026-05-26', indefinido:'NO', estado:'Aprobado',     detalle:'Acceso temporal urgente para soporte técnico de proveedor de equipos de red.' },
+      { id:15, ticket:'465789', tipo:'Excepción de Compliance', solicitante:'Ricardo Soto',        jefatura:'Carlos Muñoz',    gerencia:'Gobierno, Riesgo y Cumplimiento',  plataforma:'Cloudflare',        aprobado:'Jose Saavedra',  ejecutor:'Felipe Acosta',    fSolicitud:'2026-05-23', fAprobacion:'',           fLimite:'',           indefinido:'NO', estado:'Cancelado',    detalle:'Excepción cancelada por cambio en requerimientos del proyecto.' },
+    ];
+
     if (records.length === 0) {
-      records = [{
-        id: 1,
-        ticket: '427434',
-        tipo: 'Acceso Temporal',
-        solicitante: 'Cristian Pino',
-        jefatura: 'Cristian Pino',
-        gerencia: 'Procesos de Inversiones',
-        plataforma: 'Fortigate Interno',
-        aprobado: 'Felipe Acosta',
-        ejecutor: 'Ricardo Gonzalez',
-        fSolicitud: '2026-04-17',
-        fAprobacion: '2026-04-17',
-        fLimite: '2026-05-17',
-        indefinido: 'NO',
-        estado: 'Aprobado',
-        detalle: 'Acceso temporal a SFTP de Asicom.\nSe recomienda el uso de VPN Site to Site.'
-      }];
+      records = DUMMY_DATA;
       save();
     }
 
-    function save() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-    }
-
-    function nextId() {
-      return records.length > 0 ? Math.max(...records.map(r => r.id)) + 1 : 1;
-    }
+    function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); }
+    function nextId() { return records.length > 0 ? Math.max(...records.map(r => r.id)) + 1 : 1; }
 
     function getSemaforo(r) {
       if (r.indefinido === 'SI') return { cls: 'verde', label: 'Verde' };
-      if (r.estado === 'Rechazado') return { cls: 'rojo', label: 'Rojo' };
+      if (r.estado === 'Rechazado' || r.estado === 'Cancelado') return { cls: 'rojo', label: 'Rojo' };
       if (!r.fLimite) return { cls: 'verde', label: 'Verde' };
       const hoy = new Date(); hoy.setHours(0,0,0,0);
       const limite = new Date(r.fLimite + 'T00:00:00');
@@ -643,6 +454,12 @@
       if (diff < 0) return { cls: 'rojo', label: 'Rojo' };
       if (diff <= 15) return { cls: 'amarillo', label: 'Amarillo' };
       return { cls: 'verde', label: 'Verde' };
+    }
+
+    function getDiasRestantes(r) {
+      if (!r.fLimite || r.indefinido === 'SI') return null;
+      const hoy = new Date(); hoy.setHours(0,0,0,0);
+      return Math.ceil((new Date(r.fLimite + 'T00:00:00') - hoy) / 86400000);
     }
 
     function formatDate(d) {
@@ -655,13 +472,200 @@
       const sem = getSemaforo(r);
       if (sem.cls === 'rojo' && estado === 'Aprobado' && r.fLimite) {
         const hoy = new Date(); hoy.setHours(0,0,0,0);
-        const limite = new Date(r.fLimite + 'T00:00:00');
-        if (limite < hoy) return '<span class="estado-badge estado-vencido">Vencido</span>';
+        if (new Date(r.fLimite + 'T00:00:00') < hoy) return '<span class="estado-badge estado-vencido">Vencido</span>';
       }
-      const cls = { Aprobado: 'aprobado', Pendiente: 'pendiente', Rechazado: 'rechazado', 'En Ejecución': 'ejecucion', Ejecutado: 'ejecutado', Cancelado: 'cancelado' }[estado] || 'pendiente';
+      const cls = { Aprobado:'aprobado', Pendiente:'pendiente', Rechazado:'rechazado', 'En Ejecución':'ejecucion', Ejecutado:'ejecutado', Cancelado:'cancelado' }[estado] || 'pendiente';
       return `<span class="estado-badge estado-${cls}">${esc(estado) || '—'}</span>`;
     }
 
+    // ── VISTAS ────────────────────────────────────────────────────────────────
+    function showView(v) {
+      document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+      document.getElementById('view-' + v).classList.add('active');
+      event.currentTarget.classList.add('active');
+      if (v === 'dashboard') renderDashboard();
+      if (v === 'registro') renderTable();
+    }
+
+    // ── DASHBOARD ─────────────────────────────────────────────────────────────
+    function renderDashboard() {
+      renderKPIs();
+      renderUpcoming();
+      renderCharts();
+    }
+
+    function renderKPIs() {
+      const total = records.length;
+      const activas = records.filter(r => r.estado === 'Aprobado' || r.estado === 'En Ejecución').length;
+      const pendientes = records.filter(r => r.estado === 'Pendiente').length;
+      const atencion = records.filter(r => { const s = getSemaforo(r); return s.cls === 'amarillo' || s.cls === 'rojo'; }).length;
+
+      document.getElementById('kpiGrid').innerHTML = `
+        <div class="kpi-card blue">
+          <div class="kpi-icon">📋</div>
+          <div class="kpi-label">Total Excepciones</div>
+          <div class="kpi-value">${total}</div>
+          <div class="kpi-sub">registros en el sistema</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-icon">✅</div>
+          <div class="kpi-label">Activas</div>
+          <div class="kpi-value">${activas}</div>
+          <div class="kpi-sub">aprobadas o en ejecución</div>
+        </div>
+        <div class="kpi-card yellow">
+          <div class="kpi-icon">🕐</div>
+          <div class="kpi-label">Pendientes</div>
+          <div class="kpi-value">${pendientes}</div>
+          <div class="kpi-sub">esperando aprobación</div>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-icon">⚠️</div>
+          <div class="kpi-label">Requieren Atención</div>
+          <div class="kpi-value">${atencion}</div>
+          <div class="kpi-sub">vencidas o por vencer</div>
+        </div>
+      `;
+    }
+
+    function renderUpcoming() {
+      const hoy = new Date(); hoy.setHours(0,0,0,0);
+      const alertas = records
+        .filter(r => {
+          const s = getSemaforo(r);
+          return s.cls === 'amarillo' || s.cls === 'rojo';
+        })
+        .sort((a, b) => {
+          const da = a.fLimite ? new Date(a.fLimite) : new Date('9999-12-31');
+          const db = b.fLimite ? new Date(b.fLimite) : new Date('9999-12-31');
+          return da - db;
+        });
+
+      const tbody = document.getElementById('upcomingBody');
+      if (alertas.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-muted)">Sin excepciones que requieran atención</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = alertas.map(r => {
+        const sem = getSemaforo(r);
+        const dias = getDiasRestantes(r);
+        let diasLabel = '—';
+        if (dias !== null) {
+          if (dias < 0) diasLabel = `<span style="color:var(--red);font-weight:600">Vencido (${Math.abs(dias)}d)</span>`;
+          else if (dias === 0) diasLabel = `<span style="color:var(--red);font-weight:600">Vence hoy</span>`;
+          else diasLabel = `<span style="color:var(--yellow);font-weight:600">${dias} día${dias > 1 ? 's' : ''}</span>`;
+        }
+        return `<tr onclick="goToRecord(${r.id})" title="Ver en registro">
+          <td>${esc(r.ticket)}</td>
+          <td>${esc(r.tipo)}</td>
+          <td>${esc(r.solicitante)}</td>
+          <td>${esc(r.plataforma)}</td>
+          <td>${esc(r.gerencia)}</td>
+          <td>${formatDate(r.fLimite)}</td>
+          <td>${diasLabel}</td>
+          <td><span class="semaforo ${sem.cls}"><span class="semaforo-dot"></span>${sem.label}</span></td>
+          <td>${estadoBadge(r.estado, r)}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function goToRecord(id) {
+      document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+      document.getElementById('view-registro').classList.add('active');
+      document.querySelectorAll('.tab')[1].classList.add('active');
+      renderTable();
+      setTimeout(() => {
+        const rows = document.querySelectorAll('#tableBody tr');
+        rows.forEach(row => {
+          if (row.innerHTML.includes(`openModal(${id})`)) {
+            row.style.background = 'rgba(31,111,235,0.15)';
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => row.style.background = '', 2000);
+          }
+        });
+      }, 100);
+    }
+
+    function countBy(field) {
+      return records.reduce((acc, r) => {
+        const k = r[field] || 'Sin dato';
+        acc[k] = (acc[k] || 0) + 1;
+        return acc;
+      }, {});
+    }
+
+    function renderCharts() {
+      Object.values(chartInstances).forEach(c => c.destroy());
+      chartInstances = {};
+
+      const gridColor = '#30363d';
+      const textColor = '#8b949e';
+      Chart.defaults.color = textColor;
+
+      // Donut: Estado
+      const estadoCounts = countBy('estado');
+      const estadoColors = { Aprobado:'#3fb950', Pendiente:'#d29922', 'En Ejecución':'#388bfd', Ejecutado:'#bc8cff', Rechazado:'#f85149', Cancelado:'#8b949e' };
+      chartInstances.estado = new Chart(document.getElementById('chartEstado'), {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(estadoCounts),
+          datasets: [{ data: Object.values(estadoCounts), backgroundColor: Object.keys(estadoCounts).map(k => estadoColors[k] || '#8b949e'), borderColor: '#161b22', borderWidth: 2 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: textColor, padding: 12, font: { size: 12 } } } } }
+      });
+
+      // Bar horizontal: Plataforma
+      const platCounts = countBy('plataforma');
+      chartInstances.plataforma = new Chart(document.getElementById('chartPlataforma'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(platCounts),
+          datasets: [{ label: 'Excepciones', data: Object.values(platCounts), backgroundColor: '#1f6feb99', borderColor: '#1f6feb', borderWidth: 1, borderRadius: 4 }]
+        },
+        options: {
+          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { grid: { color: gridColor }, ticks: { stepSize: 1 } }, y: { grid: { color: gridColor } } }
+        }
+      });
+
+      // Bar: Tipo
+      const tipoCounts = countBy('tipo');
+      const tipoColors = ['#3fb950aa','#1f6febaa','#d29922aa','#f85149aa','#bc8cffaa'];
+      chartInstances.tipo = new Chart(document.getElementById('chartTipo'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(tipoCounts),
+          datasets: [{ label: 'Cantidad', data: Object.values(tipoCounts), backgroundColor: Object.keys(tipoCounts).map((_, i) => tipoColors[i % tipoColors.length]), borderWidth: 0, borderRadius: 4 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { grid: { color: gridColor }, ticks: { font: { size: 11 } } }, y: { grid: { color: gridColor }, ticks: { stepSize: 1 } } }
+        }
+      });
+
+      // Bar: Gerencia (top 6)
+      const gerCounts = countBy('gerencia');
+      const gerSorted = Object.entries(gerCounts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+      chartInstances.gerencia = new Chart(document.getElementById('chartGerencia'), {
+        type: 'bar',
+        data: {
+          labels: gerSorted.map(([k]) => k.length > 22 ? k.substring(0, 20) + '…' : k),
+          datasets: [{ label: 'Excepciones', data: gerSorted.map(([, v]) => v), backgroundColor: '#d2992299', borderColor: '#d29922', borderWidth: 1, borderRadius: 4 }]
+        },
+        options: {
+          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { grid: { color: gridColor }, ticks: { stepSize: 1 } }, y: { grid: { color: gridColor }, ticks: { font: { size: 11 } } } }
+        }
+      });
+    }
+
+    // ── REGISTRO TABLE ────────────────────────────────────────────────────────
     function renderTable() {
       const q = document.getElementById('searchInput').value.toLowerCase();
       const filtered = records.filter(r =>
@@ -675,11 +679,9 @@
       );
 
       const tbody = document.getElementById('tableBody');
-
       if (filtered.length === 0) {
         tbody.innerHTML = `<tr><td colspan="17"><div class="empty-state"><div class="icon">📋</div><div>No hay excepciones registradas</div></div></td></tr>`;
-        updateStats();
-        return;
+        updateStats(); return;
       }
 
       tbody.innerHTML = filtered.map(r => {
@@ -707,7 +709,6 @@
           </div></td>
         </tr>`;
       }).join('');
-
       updateStats();
     }
 
@@ -721,10 +722,10 @@
       `;
     }
 
+    // ── CRUD ──────────────────────────────────────────────────────────────────
     function openModal(id = null) {
       editingId = id;
       const fields = ['ticket','tipo','solicitante','jefatura','gerencia','plataforma','aprobado','ejecutor','fSolicitud','fAprobacion','fLimite','indefinido','estado','detalle'];
-
       if (id) {
         const r = records.find(x => x.id === id);
         document.getElementById('modalTitle').textContent = 'Editar Excepción';
@@ -733,140 +734,78 @@
         document.getElementById('modalTitle').textContent = 'Nueva Excepción';
         fields.forEach(f => document.getElementById('f_' + f).value = '');
         document.getElementById('f_indefinido').value = 'NO';
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('f_fSolicitud').value = today;
+        document.getElementById('f_fSolicitud').value = new Date().toISOString().split('T')[0];
       }
-
       document.getElementById('modalOverlay').classList.add('open');
     }
 
-    function closeModal() {
-      document.getElementById('modalOverlay').classList.remove('open');
-      editingId = null;
-    }
+    function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); editingId = null; }
 
     function saveRecord() {
       const get = id => document.getElementById('f_' + id).value.trim();
       const r = {
-        ticket: get('ticket'),
-        tipo: get('tipo'),
-        solicitante: get('solicitante'),
-        jefatura: get('jefatura'),
-        gerencia: get('gerencia'),
-        plataforma: get('plataforma'),
-        aprobado: get('aprobado'),
-        ejecutor: get('ejecutor'),
-        fSolicitud: get('fSolicitud'),
-        fAprobacion: get('fAprobacion'),
-        fLimite: get('fLimite'),
-        indefinido: get('indefinido'),
-        estado: get('estado'),
-        detalle: document.getElementById('f_detalle').value.trim()
+        ticket: get('ticket'), tipo: get('tipo'), solicitante: get('solicitante'),
+        jefatura: get('jefatura'), gerencia: get('gerencia'), plataforma: get('plataforma'),
+        aprobado: get('aprobado'), ejecutor: get('ejecutor'), fSolicitud: get('fSolicitud'),
+        fAprobacion: get('fAprobacion'), fLimite: get('fLimite'), indefinido: get('indefinido'),
+        estado: get('estado'), detalle: document.getElementById('f_detalle').value.trim()
       };
-
       if (!r.ticket || !r.tipo || !r.solicitante) {
-        alert('Por favor completa los campos obligatorios: Ticket, Tipo de Excepción y Solicitante.');
+        alert('Por favor completa: Ticket, Tipo de Excepción y Solicitante.');
         return;
       }
-
       if (editingId) {
         const idx = records.findIndex(x => x.id === editingId);
         records[idx] = { ...records[idx], ...r };
       } else {
         records.push({ id: nextId(), ...r });
       }
-
-      save();
-      renderTable();
-      closeModal();
+      save(); renderTable(); closeModal();
     }
 
-    function askDelete(id) {
-      deletingId = id;
-      document.getElementById('confirmOverlay').classList.add('open');
-    }
+    function askDelete(id) { deletingId = id; document.getElementById('confirmOverlay').classList.add('open'); }
+    function closeConfirm() { document.getElementById('confirmOverlay').classList.remove('open'); deletingId = null; }
+    function confirmDelete() { records = records.filter(r => r.id !== deletingId); save(); renderTable(); closeConfirm(); }
 
-    function closeConfirm() {
-      document.getElementById('confirmOverlay').classList.remove('open');
-      deletingId = null;
-    }
-
-    function confirmDelete() {
-      records = records.filter(r => r.id !== deletingId);
-      save();
-      renderTable();
-      closeConfirm();
-    }
-
-    function setHeaderDate() {
-      const d = new Date();
-      document.getElementById('headerDate').textContent =
-        d.toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    }
-
-    // Close modal on overlay click
-    document.getElementById('modalOverlay').addEventListener('click', e => {
-      if (e.target === document.getElementById('modalOverlay')) closeModal();
-    });
-
+    // ── EMAIL ALERTS ──────────────────────────────────────────────────────────
     async function checkAndSendAlerts() {
       if (EMAILJS_PUBLIC_KEY === 'TU_PUBLIC_KEY') return;
-
       const hoy = new Date(); hoy.setHours(0,0,0,0);
       const claveHoy = `alerta_${hoy.toISOString().split('T')[0]}`;
-
       const yaEnviadas = new Set(JSON.parse(localStorage.getItem(claveHoy) || '[]'));
-
       const porVencer = records.filter(r => {
         if (r.indefinido === 'SI' || !r.fLimite || r.estado === 'Rechazado' || r.estado === 'Cancelado') return false;
-        const limite = new Date(r.fLimite + 'T00:00:00');
-        const diff = Math.ceil((limite - hoy) / 86400000);
+        const diff = Math.ceil((new Date(r.fLimite + 'T00:00:00') - hoy) / 86400000);
         return diff >= 0 && diff <= 2 && !yaEnviadas.has(r.id);
       });
-
       if (porVencer.length === 0) return;
-
       const mensaje = porVencer.map(r => {
-        const limite = new Date(r.fLimite + 'T00:00:00');
-        const diff = Math.ceil((limite - hoy) / 86400000);
+        const diff = Math.ceil((new Date(r.fLimite + 'T00:00:00') - hoy) / 86400000);
         const dias = diff === 0 ? 'VENCE HOY' : diff === 1 ? 'vence mañana' : 'vence en 2 días';
         return `• [Ticket ${r.ticket}] ${r.tipo} | Solicitante: ${r.solicitante} | Plataforma: ${r.plataforma} | ${dias} (${r.fLimite})`;
       }).join('\n');
-
       try {
         emailjs.init(EMAILJS_PUBLIC_KEY);
-        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-          mensaje,
-          to_email: CORREO_DESTINO,
-        });
-
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, { mensaje, to_email: CORREO_DESTINO });
         porVencer.forEach(r => yaEnviadas.add(r.id));
         localStorage.setItem(claveHoy, JSON.stringify([...yaEnviadas]));
-
         mostrarBannerAlerta(porVencer.length);
-      } catch (err) {
-        console.error('Error enviando alerta EmailJS:', err);
-      }
+      } catch (err) { console.error('Error EmailJS:', err); }
     }
 
     function mostrarBannerAlerta(cantidad) {
       const banner = document.createElement('div');
-      banner.style.cssText = `
-        position:fixed; bottom:24px; right:24px; z-index:999;
-        background:#da3633; color:#fff; padding:14px 20px;
-        border-radius:8px; font-size:13px; font-weight:500;
-        box-shadow:0 4px 20px rgba(0,0,0,0.4); max-width:320px;
-        display:flex; align-items:center; gap:10px;
-      `;
-      banner.innerHTML = `<span style="font-size:18px">⚠️</span>
-        <span>Se envió alerta: <strong>${cantidad} excepción${cantidad > 1 ? 'es' : ''}</strong> vence${cantidad > 1 ? 'n' : ''} en 2 días o menos.</span>
-        <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:16px;margin-left:auto;">×</button>`;
+      banner.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:999;background:#da3633;color:#fff;padding:14px 20px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,0.4);max-width:320px;display:flex;align-items:center;gap:10px;';
+      banner.innerHTML = `<span style="font-size:18px">⚠️</span><span>Alerta enviada: <strong>${cantidad} excepción${cantidad > 1 ? 'es' : ''}</strong> vence${cantidad > 1 ? 'n' : ''} pronto.</span><button onclick="this.parentElement.remove()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:16px;margin-left:auto;">×</button>`;
       document.body.appendChild(banner);
       setTimeout(() => banner.remove(), 8000);
     }
 
-    setHeaderDate();
-    renderTable();
+    // ── INIT ──────────────────────────────────────────────────────────────────
+    document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target === document.getElementById('modalOverlay')) closeModal(); });
+    document.getElementById('headerDate').textContent = new Date().toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    renderDashboard();
     checkAndSendAlerts();
   </script>
 </body>
