@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Registro de Excepciones - Ciberseguridad</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
   <style>
     :root {
       --bg: #0d1117;
@@ -197,16 +198,24 @@
           <div class="chart-wrap"><canvas id="chartEstado"></canvas></div>
         </div>
         <div class="chart-card">
-          <div class="chart-title">Por Plataforma <span>cantidad de excepciones</span></div>
-          <div class="chart-wrap"><canvas id="chartPlataforma"></canvas></div>
+          <div class="chart-title">Por Plataforma <span>mayor a menor</span></div>
+          <div class="chart-wrap tall"><canvas id="chartPlataforma"></canvas></div>
         </div>
         <div class="chart-card">
-          <div class="chart-title">Por Tipo de Excepción <span>cantidad</span></div>
+          <div class="chart-title">Por Tipo de Excepción <span>mayor a menor</span></div>
           <div class="chart-wrap"><canvas id="chartTipo"></canvas></div>
         </div>
         <div class="chart-card">
-          <div class="chart-title">Por Gerencia <span>top gerencias</span></div>
-          <div class="chart-wrap"><canvas id="chartGerencia"></canvas></div>
+          <div class="chart-title">Por Gerencia <span>top gerencias · mayor a menor</span></div>
+          <div class="chart-wrap tall"><canvas id="chartGerencia"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Top Solicitantes <span>quién genera más excepciones</span></div>
+          <div class="chart-wrap tall"><canvas id="chartSolicitantes"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Top Ejecutores <span>quién ejecuta más excepciones</span></div>
+          <div class="chart-wrap tall"><canvas id="chartEjecutores"></canvas></div>
         </div>
       </div>
 
@@ -419,21 +428,36 @@
     }
 
     const DUMMY_DATA = [
-      { id:1,  ticket:'427434', tipo:'Acceso Temporal',        solicitante:'Cristian Pino',       jefatura:'Cristian Pino',   gerencia:'Procesos de Inversiones',          plataforma:'Fortigate Interno', aprobado:'Felipe Acosta',  ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-04-17', fAprobacion:'2026-04-17', fLimite:'2026-05-25', indefinido:'NO', estado:'Aprobado',     detalle:'Acceso temporal a SFTP de Asicom. Se recomienda el uso de VPN Site to Site.' },
-      { id:2,  ticket:'431205', tipo:'Configuración Especial',  solicitante:'María González',      jefatura:'José Ramírez',    gerencia:'Técnica',                          plataforma:'Cloudflare',        aprobado:'Luis Caris',     ejecutor:'Yordan Padron',    fSolicitud:'2026-04-20', fAprobacion:'2026-04-21', fLimite:'2026-12-31', indefinido:'NO', estado:'Aprobado',     detalle:'Configuración de reglas WAF para aplicación web interna.' },
-      { id:3,  ticket:'435678', tipo:'Excepción de Seguridad',  solicitante:'Pedro Soto',          jefatura:'Ana Torres',      gerencia:'Comercial',                        plataforma:'Kaspersky',         aprobado:'Jose Saavedra',  ejecutor:'Felipe Acosta',    fSolicitud:'2026-03-10', fAprobacion:'2026-03-12', fLimite:'2026-05-10', indefinido:'NO', estado:'Ejecutado',    detalle:'Exclusión de análisis en tiempo real para proceso batch nocturno.' },
-      { id:4,  ticket:'440123', tipo:'Excepción de Compliance', solicitante:'Laura Vega',          jefatura:'Carlos Muñoz',    gerencia:'Gobierno, Riesgo y Cumplimiento',  plataforma:'Sentinel',          aprobado:'Felipe Acosta',  ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-05-01', fAprobacion:'',           fLimite:'',           indefinido:'NO', estado:'Pendiente',    detalle:'Excepción solicitada para integración con proveedor externo de auditoría.' },
-      { id:5,  ticket:'442890', tipo:'Acceso Temporal',         solicitante:'Roberto Díaz',        jefatura:'Cristian Pino',   gerencia:'Inversiones',                      plataforma:'Fortigate Borde',   aprobado:'Luis Caris',     ejecutor:'Yordan Padron',    fSolicitud:'2026-05-05', fAprobacion:'2026-05-06', fLimite:'2026-05-24', indefinido:'NO', estado:'Aprobado',     detalle:'Acceso temporal para consultor externo durante proyecto de migración.' },
-      { id:6,  ticket:'445001', tipo:'Configuración Especial',  solicitante:'Andrea Morales',      jefatura:'Jorge Fuentes',   gerencia:'Planificación y Gestión Financiera',plataforma:'SMG',               aprobado:'Jose Saavedra',  ejecutor:'Felipe Acosta',    fSolicitud:'2026-04-15', fAprobacion:'2026-04-16', fLimite:'',           indefinido:'SI', estado:'Aprobado',     detalle:'Configuración permanente para integración con sistema de pagos internacionales.' },
-      { id:7,  ticket:'447332', tipo:'Excepción de Seguridad',  solicitante:'Felipe Castro',       jefatura:'Ana Torres',      gerencia:'Operaciones',                      plataforma:'Deep Security',     aprobado:'Felipe Acosta',  ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-05-10', fAprobacion:'2026-05-11', fLimite:'2026-06-10', indefinido:'NO', estado:'En Ejecución', detalle:'Exclusión de módulo IDS para servidor de procesamiento de imágenes.' },
-      { id:8,  ticket:'449678', tipo:'Otra',                    solicitante:'Valentina Rojas',     jefatura:'Carlos Muñoz',    gerencia:'Riesgos Corporativos',              plataforma:'Cloudflare',        aprobado:'Luis Caris',     ejecutor:'Yordan Padron',    fSolicitud:'2026-04-28', fAprobacion:'',           fLimite:'',           indefinido:'NO', estado:'Rechazado',    detalle:'Solicitud de apertura de puerto 8080 para aplicación legacy. Rechazado por política.' },
-      { id:9,  ticket:'452100', tipo:'Acceso Temporal',         solicitante:'Gonzalo Herrera',     jefatura:'José Ramírez',    gerencia:'Estudios y Riesgo Financiero',      plataforma:'Fortigate Interno', aprobado:'Jose Saavedra',  ejecutor:'Felipe Acosta',    fSolicitud:'2026-05-12', fAprobacion:'2026-05-13', fLimite:'2026-07-13', indefinido:'NO', estado:'Aprobado',     detalle:'Acceso temporal para equipo de auditoría interna durante revisión semestral.' },
-      { id:10, ticket:'454500', tipo:'Excepción de Compliance', solicitante:'Camila Fernández',    jefatura:'Jorge Fuentes',   gerencia:'Inversiones Inmobiliaria',          plataforma:'Kaspersky',         aprobado:'Felipe Acosta',  ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-05-15', fAprobacion:'2026-05-15', fLimite:'2026-08-15', indefinido:'NO', estado:'Aprobado',     detalle:'Excepción de política antivirus para software de gestión inmobiliaria certificado.' },
-      { id:11, ticket:'456789', tipo:'Configuración Especial',  solicitante:'Martín Silva',        jefatura:'Ana Torres',      gerencia:'Plataforma y Control',              plataforma:'Sentinel',          aprobado:'Luis Caris',     ejecutor:'Yordan Padron',    fSolicitud:'2026-05-18', fAprobacion:'',           fLimite:'',           indefinido:'NO', estado:'Pendiente',    detalle:'Configuración de alertas personalizadas para detección de anomalías en red OT.' },
-      { id:12, ticket:'459001', tipo:'Excepción de Seguridad',  solicitante:'Daniela Castillo',    jefatura:'Cristian Pino',   gerencia:'General',                          plataforma:'SMG',               aprobado:'Jose Saavedra',  ejecutor:'Felipe Acosta',    fSolicitud:'2026-03-01', fAprobacion:'2026-03-02', fLimite:'2026-04-01', indefinido:'NO', estado:'Ejecutado',    detalle:'Excepción de filtro de correo para dominio de proveedor estratégico.' },
-      { id:13, ticket:'461234', tipo:'Otra',                    solicitante:'Sebastián Ramírez',   jefatura:'Jorge Fuentes',   gerencia:'Comercial',                        plataforma:'Deep Security',     aprobado:'Felipe Acosta',  ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-05-20', fAprobacion:'2026-05-21', fLimite:'2026-11-21', indefinido:'NO', estado:'En Ejecución', detalle:'Excepción para herramienta de monitoreo de rendimiento en servidores de producción.' },
-      { id:14, ticket:'463500', tipo:'Acceso Temporal',         solicitante:'Isabel Muñoz',        jefatura:'José Ramírez',    gerencia:'Técnica',                          plataforma:'Fortigate Borde',   aprobado:'Luis Caris',     ejecutor:'Yordan Padron',    fSolicitud:'2026-05-22', fAprobacion:'2026-05-22', fLimite:'2026-05-26', indefinido:'NO', estado:'Aprobado',     detalle:'Acceso temporal urgente para soporte técnico de proveedor de equipos de red.' },
-      { id:15, ticket:'465789', tipo:'Excepción de Compliance', solicitante:'Ricardo Soto',        jefatura:'Carlos Muñoz',    gerencia:'Gobierno, Riesgo y Cumplimiento',  plataforma:'Cloudflare',        aprobado:'Jose Saavedra',  ejecutor:'Felipe Acosta',    fSolicitud:'2026-05-23', fAprobacion:'',           fLimite:'',           indefinido:'NO', estado:'Cancelado',    detalle:'Excepción cancelada por cambio en requerimientos del proyecto.' },
+      { id:1,  ticket:'427434', tipo:'Acceso Temporal',         solicitante:'Cristian Pino',      jefatura:'Cristian Pino',   gerencia:'Procesos de Inversiones',           plataforma:'Fortigate Interno', aprobado:'Felipe Acosta',  ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-04-17', fAprobacion:'2026-04-17', fLimite:'2026-05-25', indefinido:'NO', estado:'Aprobado',     detalle:'Acceso temporal a SFTP de Asicom. Se recomienda VPN Site to Site.' },
+      { id:2,  ticket:'431205', tipo:'Configuración Especial',  solicitante:'María González',     jefatura:'José Ramírez',    gerencia:'Técnica',                           plataforma:'Cloudflare',        aprobado:'Luis Caris',     ejecutor:'Yordan Padron',    fSolicitud:'2026-04-20', fAprobacion:'2026-04-21', fLimite:'2026-12-31', indefinido:'NO', estado:'Aprobado',     detalle:'Configuración de reglas WAF para aplicación web interna.' },
+      { id:3,  ticket:'435678', tipo:'Excepción de Seguridad',  solicitante:'Pedro Soto',         jefatura:'Ana Torres',      gerencia:'Comercial',                         plataforma:'Kaspersky',         aprobado:'Jose Saavedra',  ejecutor:'Felipe Acosta',    fSolicitud:'2026-03-10', fAprobacion:'2026-03-12', fLimite:'2026-05-10', indefinido:'NO', estado:'Ejecutado',    detalle:'Exclusión de análisis en tiempo real para proceso batch nocturno.' },
+      { id:4,  ticket:'440123', tipo:'Excepción de Compliance', solicitante:'Laura Vega',         jefatura:'Carlos Muñoz',    gerencia:'Gobierno, Riesgo y Cumplimiento',   plataforma:'Sentinel',          aprobado:'Felipe Acosta',  ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-05-01', fAprobacion:'',           fLimite:'',           indefinido:'NO', estado:'Pendiente',    detalle:'Excepción para integración con proveedor externo de auditoría.' },
+      { id:5,  ticket:'442890', tipo:'Acceso Temporal',         solicitante:'Cristian Pino',      jefatura:'Cristian Pino',   gerencia:'Procesos de Inversiones',           plataforma:'Fortigate Borde',   aprobado:'Luis Caris',     ejecutor:'Yordan Padron',    fSolicitud:'2026-05-05', fAprobacion:'2026-05-06', fLimite:'2026-05-24', indefinido:'NO', estado:'Aprobado',     detalle:'Acceso temporal para consultor externo durante proyecto de migración.' },
+      { id:6,  ticket:'445001', tipo:'Configuración Especial',  solicitante:'Andrea Morales',     jefatura:'Jorge Fuentes',   gerencia:'Planificación y Gestión Financiera', plataforma:'SMG',               aprobado:'Jose Saavedra',  ejecutor:'Felipe Acosta',    fSolicitud:'2026-04-15', fAprobacion:'2026-04-16', fLimite:'',           indefinido:'SI', estado:'Aprobado',     detalle:'Configuración permanente para integración con sistema de pagos.' },
+      { id:7,  ticket:'447332', tipo:'Excepción de Seguridad',  solicitante:'Felipe Castro',      jefatura:'Ana Torres',      gerencia:'Operaciones',                       plataforma:'Deep Security',     aprobado:'Felipe Acosta',  ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-05-10', fAprobacion:'2026-05-11', fLimite:'2026-06-10', indefinido:'NO', estado:'En Ejecución', detalle:'Exclusión de módulo IDS para servidor de procesamiento de imágenes.' },
+      { id:8,  ticket:'449678', tipo:'Otra',                    solicitante:'Valentina Rojas',    jefatura:'Carlos Muñoz',    gerencia:'Riesgos Corporativos',               plataforma:'Cloudflare',        aprobado:'Luis Caris',     ejecutor:'Yordan Padron',    fSolicitud:'2026-04-28', fAprobacion:'',           fLimite:'',           indefinido:'NO', estado:'Rechazado',    detalle:'Solicitud de apertura de puerto 8080 rechazada por política de seguridad.' },
+      { id:9,  ticket:'452100', tipo:'Acceso Temporal',         solicitante:'Gonzalo Herrera',    jefatura:'José Ramírez',    gerencia:'Estudios y Riesgo Financiero',       plataforma:'Fortigate Interno', aprobado:'Jose Saavedra',  ejecutor:'Felipe Acosta',    fSolicitud:'2026-05-12', fAprobacion:'2026-05-13', fLimite:'2026-07-13', indefinido:'NO', estado:'Aprobado',     detalle:'Acceso temporal para equipo de auditoría interna durante revisión semestral.' },
+      { id:10, ticket:'454500', tipo:'Excepción de Compliance', solicitante:'Camila Fernández',   jefatura:'Jorge Fuentes',   gerencia:'Inversiones Inmobiliaria',           plataforma:'Kaspersky',         aprobado:'Felipe Acosta',  ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-05-15', fAprobacion:'2026-05-15', fLimite:'2026-08-15', indefinido:'NO', estado:'Aprobado',     detalle:'Excepción de política antivirus para software de gestión inmobiliaria.' },
+      { id:11, ticket:'456789', tipo:'Configuración Especial',  solicitante:'Martín Silva',       jefatura:'Ana Torres',      gerencia:'Plataforma y Control',               plataforma:'Sentinel',          aprobado:'Luis Caris',     ejecutor:'Yordan Padron',    fSolicitud:'2026-05-18', fAprobacion:'',           fLimite:'',           indefinido:'NO', estado:'Pendiente',    detalle:'Alertas personalizadas para detección de anomalías en red OT.' },
+      { id:12, ticket:'459001', tipo:'Excepción de Seguridad',  solicitante:'Daniela Castillo',   jefatura:'Cristian Pino',   gerencia:'General',                           plataforma:'SMG',               aprobado:'Jose Saavedra',  ejecutor:'Felipe Acosta',    fSolicitud:'2026-03-01', fAprobacion:'2026-03-02', fLimite:'2026-04-01', indefinido:'NO', estado:'Ejecutado',    detalle:'Excepción de filtro de correo para dominio de proveedor estratégico.' },
+      { id:13, ticket:'461234', tipo:'Otra',                    solicitante:'Sebastián Ramírez',  jefatura:'Jorge Fuentes',   gerencia:'Comercial',                         plataforma:'Deep Security',     aprobado:'Felipe Acosta',  ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-05-20', fAprobacion:'2026-05-21', fLimite:'2026-11-21', indefinido:'NO', estado:'En Ejecución', detalle:'Herramienta de monitoreo de rendimiento en servidores de producción.' },
+      { id:14, ticket:'463500', tipo:'Acceso Temporal',         solicitante:'Isabel Muñoz',       jefatura:'José Ramírez',    gerencia:'Técnica',                           plataforma:'Fortigate Borde',   aprobado:'Luis Caris',     ejecutor:'Yordan Padron',    fSolicitud:'2026-05-22', fAprobacion:'2026-05-22', fLimite:'2026-05-26', indefinido:'NO', estado:'Aprobado',     detalle:'Acceso urgente para soporte técnico de proveedor de equipos de red.' },
+      { id:15, ticket:'465789', tipo:'Excepción de Compliance', solicitante:'Ricardo Soto',       jefatura:'Carlos Muñoz',    gerencia:'Gobierno, Riesgo y Cumplimiento',   plataforma:'Cloudflare',        aprobado:'Jose Saavedra',  ejecutor:'Felipe Acosta',    fSolicitud:'2026-05-23', fAprobacion:'',           fLimite:'',           indefinido:'NO', estado:'Cancelado',    detalle:'Excepción cancelada por cambio en requerimientos del proyecto.' },
+      { id:16, ticket:'467890', tipo:'Acceso Temporal',         solicitante:'Cristian Pino',      jefatura:'Cristian Pino',   gerencia:'Procesos de Inversiones',           plataforma:'Sentinel',          aprobado:'Jose Saavedra',  ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-05-10', fAprobacion:'2026-05-10', fLimite:'2026-06-30', indefinido:'NO', estado:'Aprobado',     detalle:'Acceso a repositorio de configuraciones de red.' },
+      { id:17, ticket:'469001', tipo:'Excepción de Seguridad',  solicitante:'María González',     jefatura:'José Ramírez',    gerencia:'Técnica',                           plataforma:'Deep Security',     aprobado:'Luis Caris',     ejecutor:'Yordan Padron',    fSolicitud:'2026-04-25', fAprobacion:'2026-04-26', fLimite:'2026-07-26', indefinido:'NO', estado:'Aprobado',     detalle:'Excepción de IDS para servidor de CI/CD.' },
+      { id:18, ticket:'471234', tipo:'Configuración Especial',  solicitante:'Carlos Venegas',     jefatura:'Ana Torres',      gerencia:'Operaciones',                       plataforma:'Fortigate Interno', aprobado:'Felipe Acosta',  ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-05-15', fAprobacion:'2026-05-16', fLimite:'2026-08-16', indefinido:'NO', estado:'Aprobado',     detalle:'Regla de NAT para integración con sistema externo de pagos.' },
+      { id:19, ticket:'473500', tipo:'Acceso Temporal',         solicitante:'Patricia López',     jefatura:'Carlos Muñoz',    gerencia:'Riesgos Corporativos',               plataforma:'Cloudflare',        aprobado:'Jose Saavedra',  ejecutor:'Felipe Acosta',    fSolicitud:'2026-05-18', fAprobacion:'',           fLimite:'',           indefinido:'NO', estado:'Pendiente',    detalle:'Acceso temporal para auditor externo de riesgos corporativos.' },
+      { id:20, ticket:'475678', tipo:'Excepción de Compliance', solicitante:'Cristian Pino',      jefatura:'Cristian Pino',   gerencia:'Procesos de Inversiones',           plataforma:'Kaspersky',         aprobado:'Luis Caris',     ejecutor:'Yordan Padron',    fSolicitud:'2026-05-20', fAprobacion:'2026-05-21', fLimite:'2026-09-21', indefinido:'NO', estado:'Aprobado',     detalle:'Excepción de escaneo para base de datos de transacciones financieras.' },
+      { id:21, ticket:'477890', tipo:'Otra',                    solicitante:'Pedro Soto',         jefatura:'Ana Torres',      gerencia:'Comercial',                         plataforma:'SMG',               aprobado:'Felipe Acosta',  ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-05-05', fAprobacion:'2026-05-06', fLimite:'2026-06-06', indefinido:'NO', estado:'En Ejecución', detalle:'Regla de excepción para newsletters de campaña de marketing.' },
+      { id:22, ticket:'480001', tipo:'Acceso Temporal',         solicitante:'María González',     jefatura:'José Ramírez',    gerencia:'Técnica',                           plataforma:'Fortigate Borde',   aprobado:'Jose Saavedra',  ejecutor:'Felipe Acosta',    fSolicitud:'2026-05-22', fAprobacion:'2026-05-22', fLimite:'2026-06-22', indefinido:'NO', estado:'Aprobado',     detalle:'Acceso para revisión de configuración de firewall perimetral.' },
+      { id:23, ticket:'482345', tipo:'Excepción de Seguridad',  solicitante:'Felipe Castro',      jefatura:'Ana Torres',      gerencia:'Operaciones',                       plataforma:'Sentinel',          aprobado:'Luis Caris',     ejecutor:'Yordan Padron',    fSolicitud:'2026-04-10', fAprobacion:'2026-04-11', fLimite:'2026-05-11', indefinido:'NO', estado:'Ejecutado',    detalle:'Excepción de alertas para ventana de mantenimiento programado.' },
+      { id:24, ticket:'484567', tipo:'Configuración Especial',  solicitante:'Laura Vega',         jefatura:'Carlos Muñoz',    gerencia:'Gobierno, Riesgo y Cumplimiento',   plataforma:'Deep Security',     aprobado:'Felipe Acosta',  ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-05-23', fAprobacion:'',           fLimite:'',           indefinido:'NO', estado:'Pendiente',    detalle:'Políticas de DLP para protección de datos sensibles de clientes.' },
+      { id:25, ticket:'486789', tipo:'Acceso Temporal',         solicitante:'Carlos Venegas',     jefatura:'Ana Torres',      gerencia:'Operaciones',                       plataforma:'Fortigate Interno', aprobado:'Jose Saavedra',  ejecutor:'Yordan Padron',    fSolicitud:'2026-05-23', fAprobacion:'2026-05-23', fLimite:'',           indefinido:'SI', estado:'Aprobado',     detalle:'Acceso permanente para monitoreo de sistemas críticos de operaciones.' },
+      { id:26, ticket:'488901', tipo:'Excepción de Seguridad',  solicitante:'Cristian Pino',      jefatura:'Cristian Pino',   gerencia:'Procesos de Inversiones',           plataforma:'Kaspersky',         aprobado:'Felipe Acosta',  ejecutor:'Felipe Acosta',    fSolicitud:'2026-05-01', fAprobacion:'2026-05-02', fLimite:'2026-07-02', indefinido:'NO', estado:'Aprobado',     detalle:'Exclusión de módulo de análisis para software de inversiones certificado.' },
+      { id:27, ticket:'491012', tipo:'Acceso Temporal',         solicitante:'Andrea Morales',     jefatura:'Jorge Fuentes',   gerencia:'Planificación y Gestión Financiera', plataforma:'Cloudflare',        aprobado:'Luis Caris',     ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-05-15', fAprobacion:'2026-05-16', fLimite:'2026-06-16', indefinido:'NO', estado:'Aprobado',     detalle:'Acceso temporal para revisión de presupuesto con consultora externa.' },
+      { id:28, ticket:'493234', tipo:'Excepción de Compliance', solicitante:'Roberto Díaz',       jefatura:'Cristian Pino',   gerencia:'Inversiones',                       plataforma:'Sentinel',          aprobado:'Jose Saavedra',  ejecutor:'Yordan Padron',    fSolicitud:'2026-04-20', fAprobacion:'2026-04-21', fLimite:'2026-05-21', indefinido:'NO', estado:'Ejecutado',    detalle:'Excepción de monitoreo para herramienta de análisis de portafolio.' },
+      { id:29, ticket:'495456', tipo:'Otra',                    solicitante:'María González',     jefatura:'José Ramírez',    gerencia:'Técnica',                           plataforma:'SMG',               aprobado:'Felipe Acosta',  ejecutor:'Felipe Acosta',    fSolicitud:'2026-05-20', fAprobacion:'2026-05-20', fLimite:'2026-08-20', indefinido:'NO', estado:'Aprobado',     detalle:'Excepción de filtro anti-spam para dominio de partner tecnológico.' },
+      { id:30, ticket:'497678', tipo:'Configuración Especial',  solicitante:'Gonzalo Herrera',    jefatura:'José Ramírez',    gerencia:'Estudios y Riesgo Financiero',       plataforma:'Deep Security',     aprobado:'Luis Caris',     ejecutor:'Ricardo Gonzalez', fSolicitud:'2026-05-21', fAprobacion:'2026-05-22', fLimite:'2026-09-22', indefinido:'NO', estado:'Aprobado',     detalle:'Configuración de excepciones para plataforma de análisis de riesgo.' },
     ];
 
     if (records.length === 0) {
@@ -597,71 +621,119 @@
       }, {});
     }
 
+    function sortedEntries(field, limit = 99) {
+      return Object.entries(countBy(field)).sort((a, b) => b[1] - a[1]).slice(0, limit);
+    }
+
     function renderCharts() {
       Object.values(chartInstances).forEach(c => c.destroy());
       chartInstances = {};
 
+      Chart.register(ChartDataLabels);
       const gridColor = '#30363d';
       const textColor = '#8b949e';
+      const labelColor = '#c9d1d9';
       Chart.defaults.color = textColor;
 
-      // Donut: Estado
-      const estadoCounts = countBy('estado');
+      const hBar = (entries, color) => ({
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          datalabels: { color: labelColor, anchor: 'end', align: 'right', offset: 4, font: { size: 12, weight: '600' } }
+        },
+        scales: {
+          x: { grid: { color: gridColor }, ticks: { stepSize: 1, color: textColor }, border: { color: gridColor } },
+          y: { grid: { color: 'transparent' }, ticks: { color: textColor, font: { size: 12 } }, border: { color: gridColor } }
+        }
+      });
+
+      const vBar = () => ({
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          datalabels: { color: labelColor, anchor: 'end', align: 'top', offset: 2, font: { size: 12, weight: '600' } }
+        },
+        scales: {
+          x: { grid: { color: 'transparent' }, ticks: { color: textColor, font: { size: 11 } }, border: { color: gridColor } },
+          y: { grid: { color: gridColor }, ticks: { stepSize: 1, color: textColor }, border: { color: gridColor } }
+        }
+      });
+
+      // Donut: Estado (ordenado mayor a menor)
       const estadoColors = { Aprobado:'#3fb950', Pendiente:'#d29922', 'En Ejecución':'#388bfd', Ejecutado:'#bc8cff', Rechazado:'#f85149', Cancelado:'#8b949e' };
+      const estadoSorted = sortedEntries('estado');
       chartInstances.estado = new Chart(document.getElementById('chartEstado'), {
         type: 'doughnut',
         data: {
-          labels: Object.keys(estadoCounts),
-          datasets: [{ data: Object.values(estadoCounts), backgroundColor: Object.keys(estadoCounts).map(k => estadoColors[k] || '#8b949e'), borderColor: '#161b22', borderWidth: 2 }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: textColor, padding: 12, font: { size: 12 } } } } }
-      });
-
-      // Bar horizontal: Plataforma
-      const platCounts = countBy('plataforma');
-      chartInstances.plataforma = new Chart(document.getElementById('chartPlataforma'), {
-        type: 'bar',
-        data: {
-          labels: Object.keys(platCounts),
-          datasets: [{ label: 'Excepciones', data: Object.values(platCounts), backgroundColor: '#1f6feb99', borderColor: '#1f6feb', borderWidth: 1, borderRadius: 4 }]
-        },
-        options: {
-          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: { x: { grid: { color: gridColor }, ticks: { stepSize: 1 } }, y: { grid: { color: gridColor } } }
-        }
-      });
-
-      // Bar: Tipo
-      const tipoCounts = countBy('tipo');
-      const tipoColors = ['#3fb950aa','#1f6febaa','#d29922aa','#f85149aa','#bc8cffaa'];
-      chartInstances.tipo = new Chart(document.getElementById('chartTipo'), {
-        type: 'bar',
-        data: {
-          labels: Object.keys(tipoCounts),
-          datasets: [{ label: 'Cantidad', data: Object.values(tipoCounts), backgroundColor: Object.keys(tipoCounts).map((_, i) => tipoColors[i % tipoColors.length]), borderWidth: 0, borderRadius: 4 }]
+          labels: estadoSorted.map(([k]) => `${k} (${estadoSorted.find(e=>e[0]===k)[1]})`),
+          datasets: [{ data: estadoSorted.map(([,v]) => v), backgroundColor: estadoSorted.map(([k]) => estadoColors[k] || '#8b949e'), borderColor: '#161b22', borderWidth: 2 }]
         },
         options: {
           responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: { x: { grid: { color: gridColor }, ticks: { font: { size: 11 } } }, y: { grid: { color: gridColor }, ticks: { stepSize: 1 } } }
+          plugins: {
+            legend: { position: 'right', labels: { color: textColor, padding: 14, font: { size: 12 } } },
+            datalabels: {
+              color: '#fff', font: { size: 12, weight: '700' },
+              formatter: (v, ctx) => { const t = ctx.dataset.data.reduce((a,b)=>a+b,0); return v/t >= 0.07 ? v : ''; }
+            }
+          }
         }
       });
 
-      // Bar: Gerencia (top 6)
-      const gerCounts = countBy('gerencia');
-      const gerSorted = Object.entries(gerCounts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+      // Horizontal bar: Plataforma (ordenado mayor a menor)
+      const platSorted = sortedEntries('plataforma');
+      chartInstances.plataforma = new Chart(document.getElementById('chartPlataforma'), {
+        type: 'bar',
+        data: {
+          labels: platSorted.map(([k]) => k),
+          datasets: [{ data: platSorted.map(([,v]) => v), backgroundColor: '#1f6feb88', borderColor: '#1f6feb', borderWidth: 1, borderRadius: 4 }]
+        },
+        options: hBar(platSorted, '#1f6feb')
+      });
+
+      // Vertical bar: Tipo (ordenado mayor a menor)
+      const tipoSorted = sortedEntries('tipo');
+      const tipoColors = ['#3fb950bb','#1f6febbb','#d29922bb','#f85149bb','#bc8cffbb'];
+      chartInstances.tipo = new Chart(document.getElementById('chartTipo'), {
+        type: 'bar',
+        data: {
+          labels: tipoSorted.map(([k]) => k),
+          datasets: [{ data: tipoSorted.map(([,v]) => v), backgroundColor: tipoSorted.map((_,i) => tipoColors[i % tipoColors.length]), borderWidth: 0, borderRadius: 4 }]
+        },
+        options: vBar()
+      });
+
+      // Horizontal bar: Gerencia top 8 (ordenado mayor a menor)
+      const gerSorted = sortedEntries('gerencia', 8);
       chartInstances.gerencia = new Chart(document.getElementById('chartGerencia'), {
         type: 'bar',
         data: {
-          labels: gerSorted.map(([k]) => k.length > 22 ? k.substring(0, 20) + '…' : k),
-          datasets: [{ label: 'Excepciones', data: gerSorted.map(([, v]) => v), backgroundColor: '#d2992299', borderColor: '#d29922', borderWidth: 1, borderRadius: 4 }]
+          labels: gerSorted.map(([k]) => k.length > 24 ? k.substring(0, 22) + '…' : k),
+          datasets: [{ data: gerSorted.map(([,v]) => v), backgroundColor: '#d2992288', borderColor: '#d29922', borderWidth: 1, borderRadius: 4 }]
         },
-        options: {
-          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: { x: { grid: { color: gridColor }, ticks: { stepSize: 1 } }, y: { grid: { color: gridColor }, ticks: { font: { size: 11 } } } }
-        }
+        options: hBar(gerSorted, '#d29922')
+      });
+
+      // Horizontal bar: Top Solicitantes (ordenado mayor a menor)
+      const solSorted = sortedEntries('solicitante', 10);
+      chartInstances.solicitantes = new Chart(document.getElementById('chartSolicitantes'), {
+        type: 'bar',
+        data: {
+          labels: solSorted.map(([k]) => k),
+          datasets: [{ data: solSorted.map(([,v]) => v), backgroundColor: '#bc8cff88', borderColor: '#bc8cff', borderWidth: 1, borderRadius: 4 }]
+        },
+        options: hBar(solSorted, '#bc8cff')
+      });
+
+      // Horizontal bar: Top Ejecutores (ordenado mayor a menor)
+      const ejeSorted = sortedEntries('ejecutor', 10);
+      chartInstances.ejecutores = new Chart(document.getElementById('chartEjecutores'), {
+        type: 'bar',
+        data: {
+          labels: ejeSorted.map(([k]) => k),
+          datasets: [{ data: ejeSorted.map(([,v]) => v), backgroundColor: '#f0883e88', borderColor: '#f0883e', borderWidth: 1, borderRadius: 4 }]
+        },
+        options: hBar(ejeSorted, '#f0883e')
       });
     }
 
